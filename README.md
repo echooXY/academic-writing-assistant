@@ -8,6 +8,8 @@
 ![Stack](https://img.shields.io/badge/Multi--Model-GPT--4o%20%7C%20Claude_3.5-FF6B6B)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+> **[在线预览交互原型](https://echooxy.github.io/academic-writing-assistant/prototype/学术写作助手-交互界面.html)**
+
 > 文献库驱动的 AI 学术写作平台（Literature-Grounded AI Writing）—— 让每一篇论文，都有据可依。
 
 ---
