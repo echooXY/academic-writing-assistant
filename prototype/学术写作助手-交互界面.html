@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学术写作助手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --c-primary: #3d4f6b;
+  --c-primary-light: #5a6f8a;
+  --c-accent: #b8976e;
+  --c-accent-deep: #a0845e;
+  --c-bg: #faf7f2;
+  --c-white: #ffffff;
+  --c-border: #e8e4dc;
+  --c-border-light: #f0ece6;
+  --c-text: #2c2c2c;
+  --c-text-secondary: #8c8c8c;
+  --c-text-muted: #b0b0b0;
+  --c-green: #7d9b7a;
+  --c-orange: #c4956a;
+  --c-red: #c47a6a;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Inter", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--c-bg); color: var(--c-text); font-size: 14px; line-height: 1.6; height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
+button { cursor: pointer; border: none; outline: none; font-family: inherit; font-size: inherit; background: none; }
+input, textarea, select { font-family: inherit; outline: none; font-size: inherit; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast { position: fixed; top: 20px; right: 20px; z-index: 10000; background: var(--c-white); color: var(--c-text); padding: 14px 20px; border-radius: 10px; font-size: 13px; box-shadow: var(--shadow-lg); border-left: 3px solid var(--c-accent); pointer-events: none; opacity: 0; transform: translateX(20px); transition: all 0.25s var(--ease); max-width: 360px; }
+#toast.show { opacity: 1; transform: translateX(0); }
+
+/* ============================================================
+   PAGE TRANSITIONS
+   ============================================================ */
+.page { display: none; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; opacity: 0; transform: translateY(4px); transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+.page.active { display: flex; opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4c5a9; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-accent); }
+
+/* ============================================================
+   SCREEN 1: LOGIN — Split Layout
+   ============================================================ */
+.login-page { flex-direction: row; }
+.login-brand { width: 45%; background: var(--c-bg); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.login-brand-inner { max-width: 380px; padding: 0 48px; }
+.login-brand h1 { font-family: "Source Serif 4", "Noto Serif SC", Georgia, "Songti SC", serif; font-size: 36px; font-weight: 600; color: var(--c-primary); line-height: 1.25; margin-bottom: 12px; }
+.login-brand .brand-subtitle { font-size: 16px; font-weight: 300; color: var(--c-text-secondary); margin-bottom: 24px; }
+.login-brand .brand-line { width: 40px; height: 2px; background: var(--c-accent); margin-bottom: 28px; }
+.login-brand .brand-quote { font-family: "Source Serif 4", "Noto Serif SC", Georgia, serif; font-style: italic; font-size: 15px; color: var(--c-text-muted); line-height: 1.7; }
+
+.login-form-area { width: 55%; background: var(--c-white); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+/* Decorative blobs */
+.login-form-area::before { content: ''; position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: rgba(184,151,110,0.08); pointer-events: none; }
+.login-form-area::after { content: ''; position: absolute; bottom: -40px; left: -50px; width: 200px; height: 200px; border-radius: 50%; background: rgba(125,155,122,0.06); pointer-events: none; }
+.login-card { position: relative; z-index: 1; width: 400px; padding: 40px; }
+.login-card h2 { font-size: 20px; font-weight: 500; color: var(--c-primary); margin-bottom: 28px; }
+
+.form-group { margin-bottom: 18px; position: relative; }
+.form-group .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); z-index: 1; display: flex; }
+.form-group .input-icon svg { display: block; }
+.form-group input { width: 100%; padding: 11px 14px 11px 42px; border: 1px solid #e0dcd5; border-radius: 8px; font-size: 14px; background: var(--c-white); color: var(--c-text); transition: all 0.2s var(--ease); }
+.form-group input::placeholder { color: #c5c0b5; }
+.form-group input:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(184,151,110,0.1); }
+.eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 4px; display: flex; align-items: center; color: #c5c0b5; }
+.eye-btn:hover { color: var(--c-accent); }
+.eye-btn svg { display: block; }
+
+.privacy-row { display: flex; align-items: flex-start; margin-bottom: 22px; font-size: 12px; color: var(--c-text-secondary); }
+.cb-wrap { width: 16px; height: 16px; border: 1.5px solid #d5cfc5; border-radius: 3px; margin-right: 9px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s var(--ease); }
+.cb-wrap.checked { background: var(--c-accent); border-color: var(--c-accent); }
+.cb-wrap.checked::after { content: ''; width: 5px; height: 8px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); margin-top: -1px; }
+.privacy-row a { color: var(--c-accent); text-decoration: none; }
+
+.login-submit { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--c-accent), var(--c-accent-deep)); color: #fff; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s var(--ease); letter-spacing: 0.01em; }
+.login-submit:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 2px 8px rgba(184,151,110,0.3); }
+.login-submit:disabled { background: #e0dcd5; cursor: not-allowed; color: #bbb; box-shadow: none; }
+
+.login-footer { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--c-border); text-align: center; font-size: 12px; color: var(--c-text-muted); }
+.login-footer a { color: var(--c-accent); text-decoration: none; cursor: pointer; font-weight: 500; }
+
+/* ============================================================
+   SCREEN 2: PROJECT LIST
+   ============================================================ */
+.project-page { flex-direction: column; background: var(--c-bg); }
+.navbar { background: var(--c-white); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid rgba(0,0,0,0.06); flex-shrink: 0; z-index: 100; position: relative; }
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo { display: flex; align-items: center; gap: 8px; }
+.nav-logo svg { display: block; }
+.nav-logo span { font-size: 15px; font-weight: 600; color: var(--c-primary); letter-spacing: -0.01em; }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; color: var(--c-text-secondary); transition: all 0.15s; }
+.nav-icon-btn:hover { background: #f5f2ec; color: var(--c-text); }
+
+.project-main { flex: 1; overflow-y: auto; padding: 36px 40px; }
+.welcome { margin-bottom: 32px; }
+.welcome h1 { font-size: 24px; font-weight: 500; color: var(--c-primary); margin-bottom: 4px; }
+.welcome .welcome-sub { font-size: 13px; color: var(--c-text-muted); }
+.action-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.action-bar { margin-bottom: 16px; }
+.action-bar .section-label { font-size: 20px; font-weight: 500; color: var(--c-primary); letter-spacing: -0.01em; }
+.action-bar .section-label-note { font-size: 12px; color: var(--c-text-muted); margin-left: 10px; font-weight: 400; }
+.action-bar-right { display: flex; align-items: center; gap: 12px; }
+.search-input { padding: 8px 14px; border: 1px solid var(--c-border); border-radius: 8px; font-size: 13px; background: var(--c-white); color: var(--c-text); width: 220px; transition: all 0.2s var(--ease); }
+.search-input::placeholder { color: #c5c0b5; }
+.search-input:focus { border-color: var(--c-accent); box-shadow: 0 0 0 2px rgba(184,151,110,0.08); }
+.btn-outline-accent { padding: 9px 20px; border: 1px solid var(--c-accent); border-radius: 8px; color: var(--c-accent); font-size: 13px; font-weight: 500; transition: all 0.2s var(--ease); white-space: nowrap; background: transparent; }
+.btn-outline-accent:hover { background: var(--c-accent); color: #fff; }
+
+/* Project List Table */
+.project-list { background: var(--c-white); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.project-list-header { display: flex; align-items: center; padding: 8px 20px; font-size: 11px; color: var(--c-text-muted); border-bottom: 1px solid var(--c-border); background: #fdfcf9; font-weight: 500; letter-spacing: 0.02em; }
+.project-list-header .col-name { flex: 1; }
+.project-list-header .col-refs { width: 90px; text-align: right; }
+.project-list-header .col-created { width: 110px; text-align: right; }
+.project-list-header .col-modified { width: 110px; text-align: right; }
+.project-list-header .col-arrow { width: 36px; }
+.project-list-body { }
+.project-row { display: flex; align-items: center; padding: 13px 20px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid #ede8df; }
+.project-row:last-child { border-bottom: none; }
+.project-row:hover { background: var(--c-bg); }
+.project-row .col-name { flex: 1; display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.project-row .row-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-primary); flex-shrink: 0; margin-top: 4px; }
+.project-row .row-title-wrap { min-width: 0; }
+.project-row .row-title { font-size: 14px; font-weight: 500; color: var(--c-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-row .row-desc { font-size: 12px; color: var(--c-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.project-row .col-refs { width: 90px; text-align: right; font-size: 12px; color: var(--c-text-muted); }
+.project-row .col-created { width: 110px; text-align: right; font-size: 12px; color: var(--c-text-muted); }
+.project-row .col-modified { width: 110px; text-align: right; font-size: 12px; color: var(--c-text-muted); }
+.project-row .col-arrow { width: 36px; display: flex; justify-content: center; color: #d5cfc5; transition: all 0.2s var(--ease); }
+.project-row:hover .col-arrow { transform: translateX(4px); color: var(--c-accent); }
+@media (max-width: 900px) { .project-list-header .col-created, .project-row .col-created { display: none; } }
+
+/* User Dropdown */
+.nav-user-wrap { position: relative; }
+.nav-user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; }
+.nav-user:hover { background: #f5f2ec; }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #dce4d5; color: var(--c-green); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+.nav-username { font-size: 13px; color: var(--c-text); font-weight: 500; }
+.nav-chevron { color: var(--c-text-muted); margin-left: 2px; transition: transform 0.2s var(--ease); }
+.nav-user-wrap.open .nav-chevron { transform: rotate(180deg); }
+
+.user-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 200px; background: var(--c-white); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 200; overflow: hidden; border: 1px solid var(--c-border); }
+.nav-user-wrap.open .user-dropdown { display: block; animation: ddIn 0.15s var(--ease) both; }
+.user-dropdown .dd-user-info { padding: 14px 16px 10px; display: flex; align-items: center; gap: 10px; }
+.user-dropdown .dd-avatar { width: 34px; height: 34px; border-radius: 50%; background: #dce4d5; color: var(--c-green); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.user-dropdown .dd-name { font-size: 13px; font-weight: 600; color: var(--c-text); }
+.user-dropdown .dd-email { font-size: 11px; color: var(--c-text-muted); margin-top: 1px; }
+.user-dropdown .dd-divider { height: 1px; background: var(--c-border); margin: 0 8px; }
+.user-dropdown .dd-item { display: flex; align-items: center; gap: 8px; padding: 9px 16px; font-size: 12px; color: var(--c-text-secondary); cursor: pointer; transition: background 0.1s; }
+.user-dropdown .dd-item:hover { background: var(--c-bg); }
+.user-dropdown .dd-item.dd-logout:hover { background: #fcf0f0; color: var(--c-red); }
+.user-dropdown .dd-item svg { display: block; flex-shrink: 0; }
+@keyframes ddIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--c-white); border-radius: 16px; width: 460px; box-shadow: var(--shadow-lg); overflow: hidden; opacity: 0; transform: scale(0.96); transition: all 0.2s var(--ease); }
+.modal-overlay.show .modal { opacity: 1; transform: scale(1); }
+.modal-header { padding: 24px 28px 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 18px; font-weight: 600; color: var(--c-primary); }
+.modal-close { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; color: var(--c-text-muted); }
+.modal-close:hover { background: #f5f2ec; color: var(--c-text); }
+.modal-body { padding: 20px 28px 28px; }
+.modal-body .form-group { margin-bottom: 16px; }
+.modal-body .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--c-text-secondary); margin-bottom: 6px; }
+.modal-body .form-group input, .modal-body .form-group textarea, .modal-body .form-group select { width: 100%; padding: 9px 13px; border: 1px solid #e0dcd5; border-radius: 8px; font-size: 13px; background: var(--c-white); color: var(--c-text); transition: border-color 0.2s var(--ease); }
+.modal-body .form-group textarea { resize: vertical; min-height: 72px; }
+.modal-body .form-group input:focus, .modal-body .form-group textarea:focus, .modal-body .form-group select:focus { border-color: var(--c-accent); }
+.modal-body .form-group select { appearance: none; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%238c8c8c' d='M5 6.5L1 2.5h8z'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 0 28px 24px; }
+.btn-text { padding: 9px 18px; border-radius: 8px; font-size: 13px; color: var(--c-text-secondary); font-weight: 500; }
+.btn-text:hover { background: #f5f2ec; }
+.btn-accent { padding: 9px 22px; background: var(--c-accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500; transition: background 0.2s var(--ease); }
+.btn-accent:hover { background: var(--c-accent-deep); }
+
+/* ============================================================
+   SCREEN 3: WORKBENCH
+   ============================================================ */
+.workbench-page { flex-direction: column; height: 100vh; }
+.wb-toolbar { height: 48px; background: var(--c-white); border-bottom: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; flex-shrink: 0; z-index: 10; }
+.wb-tb-left { display: flex; align-items: center; gap: 10px; }
+.wb-back-btn { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--c-text-secondary); padding: 4px 8px; border-radius: 6px; transition: all 0.15s; }
+.wb-back-btn:hover { background: #f5f2ec; color: var(--c-primary); }
+.wb-project-name { font-size: 14px; font-weight: 500; color: var(--c-primary); }
+.wb-tb-right { display: flex; align-items: center; gap: 8px; }
+.wb-btn-export { padding: 5px 14px; border: 1px solid var(--c-border); border-radius: 6px; font-size: 12px; color: var(--c-text-secondary); font-weight: 500; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+.wb-btn-export:hover { border-color: var(--c-accent); color: var(--c-accent); background: #fdfaf5; }
+
+.three-col { display: flex; flex: 1; overflow: hidden; background: var(--c-bg); }
+.col-left { width: 20%; min-width: 150px; background: var(--c-white); display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--c-border); }
+.col-mid { width: 30%; min-width: 250px; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--c-border); }
+.col-right { flex: 1; min-width: 300px; background: var(--c-white); display: flex; flex-direction: column; overflow: hidden; }
+
+/* Resizer */
+.resizer { width: 1px; background: var(--c-border); cursor: col-resize; flex-shrink: 0; z-index: 20; position: relative; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.resizer:hover, .resizer.active { background: var(--c-accent); }
+.resizer::after { content: ''; width: 6px; height: 6px; background: #c5c0b5; border-radius: 50%; transition: background 0.15s; }
+.resizer:hover::after, .resizer.active::after { background: var(--c-accent); }
+
+/* Panel header */
+.panel-header { height: 42px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--c-border); font-size: 13px; font-weight: 600; color: var(--c-primary); flex-shrink: 0; letter-spacing: -0.01em; background: var(--c-white); }
+.btn-sm-accent { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; color: var(--c-accent); transition: all 0.15s; }
+.btn-sm-accent:hover { background: #fdf5ec; text-decoration: underline; }
+.search-sm { padding: 8px 16px; border-bottom: 1px solid var(--c-border); background: var(--c-white); }
+.search-sm input { width: 100%; padding: 7px 11px; border: 1px solid var(--c-border); border-radius: 6px; font-size: 12px; background: var(--c-white); color: var(--c-text); transition: border-color 0.2s var(--ease); }
+.search-sm input::placeholder { color: #c5c0b5; }
+.search-sm input:focus { border-color: var(--c-accent); }
+
+/* Reference list */
+.ref-list { flex: 1; overflow-y: auto; padding: 6px 8px; background: var(--c-white); }
+.ref-item { padding: 10px 14px; cursor: pointer; transition: background 0.12s; position: relative; border-left: 3px solid transparent; margin-bottom: 1px; }
+.ref-item:hover { background: var(--c-bg); border-left-color: #d4c5a9; }
+.ref-item.active { background: #f5efe4; border-left-color: var(--c-accent); }
+.ref-status-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.ref-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ref-dot.done { background: var(--c-green); }
+.ref-dot.parsing { background: var(--c-orange); }
+.ref-dot.error { background: var(--c-red); }
+.ref-status-label { font-size: 10px; color: var(--c-text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+.ref-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 2px; }
+.ref-meta { font-size: 11px; color: var(--c-text-muted); }
+.ref-tooltip { display: none; position: absolute; left: calc(100% + 10px); top: 0; width: 240px; background: var(--c-white); border-radius: 10px; padding: 14px; box-shadow: var(--shadow-md); z-index: 100; font-size: 11px; line-height: 1.5; border: 1px solid var(--c-border); }
+.ref-item:hover .ref-tooltip { display: block; }
+.ref-tooltip h4 { font-size: 12px; margin-bottom: 5px; font-weight: 600; color: var(--c-primary); }
+.ref-tooltip .abstract { color: var(--c-text-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* AI Chat area */
+.col-mid { background: var(--c-bg); }
+.col-mid .panel-header { background: var(--c-bg); }
+.chat-area { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 16px; }
+.chat-msg { display: flex; max-width: 88%; }
+.chat-msg.user { align-self: flex-end; }
+.chat-msg.ai { align-self: flex-start; }
+.chat-msg .msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.65; }
+.chat-msg.user .msg-bubble { background: linear-gradient(135deg, var(--c-accent), var(--c-accent-deep)); color: #fff; border-bottom-right-radius: 4px; }
+.chat-msg.ai .msg-bubble { background: var(--c-white); border: 1px solid #ede8df; border-bottom-left-radius: 4px; color: var(--c-text); }
+.chat-msg.ai .msg-citations { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+.chat-msg.ai .msg-cite { background: #f5efe4; color: var(--c-accent); padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.chat-msg.ai .msg-cite:hover { background: #ede0ce; }
+.chat-msg.ai .msg-actions { margin-top: 6px; }
+.chat-msg.ai .msg-actions button { background: #f5f2ec; color: var(--c-accent); padding: 3px 10px; border-radius: 6px; font-size: 11px; margin-right: 4px; transition: background 0.15s; }
+.chat-msg.ai .msg-actions button:hover { background: #ede4d5; }
+
+.ai-avatar { width: 26px; height: 26px; border-radius: 50%; background: #dce4d5; color: var(--c-green); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-right: 8px; }
+
+.chat-input-area { padding: 10px 14px; border-top: 1px solid var(--c-border); background: var(--c-white); flex-shrink: 0; }
+.chat-input-area textarea { width: 100%; padding: 9px 12px; border: 1px solid #e0dcd5; border-radius: 8px; font-size: 13px; resize: none; min-height: 36px; max-height: 100px; background: var(--c-bg); color: var(--c-text); transition: border-color 0.2s var(--ease); }
+.chat-input-area textarea::placeholder { color: #c5c0b5; }
+.chat-input-area textarea:focus { border-color: var(--c-accent); }
+.chat-input-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.scope-select select { padding: 5px 8px; border: 1px solid #e0dcd5; border-radius: 6px; font-size: 11px; color: var(--c-text-secondary); background: var(--c-white); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%238c8c8c' d='M4 5L1 2h6z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; }
+.chat-send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--c-accent); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s var(--ease); }
+.chat-send-btn:hover { background: var(--c-accent-deep); transform: scale(1.05); }
+.chat-send-btn svg { display: block; }
+
+/* Editor */
+.editor-wrapper { flex: 1; display: flex; overflow: hidden; position: relative; }
+.outline-panel { width: 180px; border-right: 1px solid var(--c-border); overflow-y: auto; padding: 16px 12px; font-size: 12px; flex-shrink: 0; background: #fdfcf9; }
+.outline-panel h4 { font-size: 10px; color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; font-weight: 600; }
+.outline-item { padding: 5px 8px 5px 16px; cursor: pointer; position: relative; color: var(--c-text-secondary); font-size: 12px; line-height: 1.5; border-left: 1px solid var(--c-border); transition: color 0.15s; }
+.outline-item::before { content: ''; position: absolute; left: -3px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: #ddd; }
+.outline-item:hover { color: var(--c-primary); }
+.outline-item.h1-level { font-weight: 600; color: var(--c-primary); }
+.outline-item.h1-level::before { background: var(--c-accent); }
+.outline-item.h2-level { padding-left: 26px; }
+.outline-item.h3-level { padding-left: 36px; color: var(--c-text-muted); }
+
+.editor-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.editor-toolbar { height: 38px; display: flex; align-items: center; gap: 2px; padding: 0 16px; border-bottom: 1px solid var(--c-border); flex-shrink: 0; background: var(--c-white); }
+.editor-toolbar button { color: var(--c-text-secondary); padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+.editor-toolbar button:hover { background: #f5f2ec; color: var(--c-primary); }
+.editor-toolbar .tb-divider { width: 1px; height: 18px; background: var(--c-border); margin: 0 4px; }
+.editor-toolbar .tb-ai-btn { color: var(--c-accent); font-weight: 500; }
+.editor-toolbar .tb-ai-btn:hover { background: #fdf5ec; }
+
+.editor-body { flex: 1; overflow-y: auto; padding: 32px 48px; line-height: 1.85; font-size: 16px; }
+.editor-body:focus { outline: none; }
+.editor-body h1 { font-family: "Inter", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 22px; font-weight: 600; margin: 28px 0 12px; color: var(--c-primary); letter-spacing: -0.01em; }
+.editor-body h2 { font-family: "Inter", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 18px; font-weight: 600; margin: 22px 0 10px; color: var(--c-primary); letter-spacing: -0.01em; }
+.editor-body h3 { font-family: "Inter", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 600; margin: 18px 0 8px; }
+.editor-body p { font-family: "Source Serif 4", "Noto Serif SC", Georgia, "Songti SC", serif; margin-bottom: 12px; }
+.editor-body .cite-ref { color: var(--c-primary); font-weight: 700; font-size: 0.78em; vertical-align: super; cursor: pointer; font-family: "Inter", -apple-system, sans-serif; transition: color 0.15s; }
+.editor-body .cite-ref:hover { color: var(--c-accent); text-decoration: underline; }
+
+/* Word count */
+.word-count { text-align: right; padding: 8px 24px 12px; font-size: 11px; color: var(--c-text-muted); border-top: 1px solid var(--c-border); flex-shrink: 0; background: var(--c-white); }
+
+/* Float toolbar */
+.float-toolbar { display: none; position: absolute; z-index: 200; background: var(--c-white); border-radius: 8px; box-shadow: var(--shadow-md); padding: 5px 6px; gap: 2px; border: 1px solid var(--c-border); }
+.float-toolbar.show { display: flex; }
+.float-toolbar button { display: flex; align-items: center; gap: 5px; background: none; padding: 6px 11px; border-radius: 6px; font-size: 12px; color: var(--c-text-secondary); white-space: nowrap; transition: all 0.15s; }
+.float-toolbar button:hover { background: var(--c-bg); color: var(--c-primary); }
+.float-toolbar button svg { display: block; }
+
+/* Empty state */
+.empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center; }
+.empty-state.show { display: flex; }
+.empty-state svg { margin-bottom: 20px; }
+.empty-state h3 { font-size: 17px; font-weight: 500; color: var(--c-primary); margin-bottom: 8px; }
+.empty-state p { font-size: 13px; color: var(--c-text-muted); margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ============================================================
+     SCREEN 1: LOGIN
+     ============================================================ -->
+<div class="page active login-page" id="page-login">
+  <div class="login-brand">
+    <div class="login-brand-inner">
+      <h1>学术写作助手</h1>
+      <p class="brand-subtitle">让每一篇论文，都有据可依</p>
+      <div class="brand-line"></div>
+      <p class="brand-quote">写作不是孤独的旅程，<br>而是与文献的对话。</p>
+    </div>
+  </div>
+  <div class="login-form-area">
+    <div class="login-card">
+      <h2>登录你的工作空间</h2>
+      <div class="form-group">
+        <span class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="11" rx="2" stroke="#b0a89a" stroke-width="1.2"/><path d="M4.5 5.5h7M4.5 8h7M4.5 10.5h4" stroke="#b0a89a" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </span>
+        <input type="text" id="login-account" placeholder="手机号或邮箱">
+      </div>
+      <div class="form-group">
+        <span class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="6" width="10" height="8" rx="1.5" stroke="#b0a89a" stroke-width="1.2"/><circle cx="8" cy="10" r="1.2" fill="#b0a89a"/><path d="M8 11v1.5" stroke="#b0a89a" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </span>
+        <input type="password" id="login-password" placeholder="密码">
+        <button class="eye-btn" id="eye-btn" title="显示/隐藏密码">
+          <svg id="eye-open" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="#b0a89a" stroke-width="1.2"/><path d="M1.5 8s2.5-5 6.5-5 6.5 5 6.5 5-2.5 5-6.5 5-6.5-5-6.5-5z" stroke="#b0a89a" stroke-width="1.2"/></svg>
+          <svg id="eye-closed" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:none;"><path d="M1.5 8s2.5-5 6.5-5 6.5 5 6.5 5-2.5 5-6.5 5-6.5-5-6.5-5z" stroke="#b0a89a" stroke-width="1.2"/><line x1="2" y1="2.5" x2="14" y2="13.5" stroke="#b0a89a" stroke-width="1.2"/></svg>
+        </button>
+      </div>
+      <div class="privacy-row">
+        <div class="cb-wrap" id="privacy-cb"></div>
+        <span>我已阅读并同意<a href="javascript:void(0)">《用户协议》</a>和<a href="javascript:void(0)">《隐私政策》</a></span>
+      </div>
+      <button class="login-submit" id="login-submit" disabled>登录</button>
+      <div class="login-footer">
+        还没有账号？<a id="signup-link" href="javascript:void(0)">立即注册</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 2: PROJECT LIST
+     ============================================================ -->
+<div class="page project-page" id="page-projects">
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="nav-logo">
+        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="6" y="0" width="10" height="10" rx="1.5" transform="rotate(45 8 8)" fill="#b8976e"/></svg>
+        <span>学术写作助手</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" title="搜索">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="7.5" cy="7.5" r="4.5" stroke="#8c8c8c" stroke-width="1.2"/><path d="M11 11l3.5 3.5" stroke="#8c8c8c" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="nav-icon-btn" title="通知">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M6.5 13.5a2 2 0 004 0M3 7a5 5 0 0110 0v2.5l1.5 2H2.5l1.5-2V7z" stroke="#8c8c8c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-user-wrap" id="nav-user-wrap">
+        <div class="nav-user" id="nav-user-btn">
+          <div class="nav-avatar">张</div>
+          <span class="nav-username">张研究员</span>
+          <svg class="nav-chevron" width="10" height="10" viewBox="0 0 10 10"><path d="M3 3.5l2 2.5 2-2.5" stroke="#8c8c8c" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <div class="user-dropdown">
+          <div class="dd-user-info">
+            <div class="dd-avatar">张</div>
+            <div>
+              <div class="dd-name">张研究员</div>
+              <div class="dd-email">zhang@university.edu.cn</div>
+            </div>
+          </div>
+          <div class="dd-divider"></div>
+          <div class="dd-item">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="1.5" fill="#8c8c8c"/><path d="M3.2 10a4 4 0 016.6 0" stroke="#8c8c8c" stroke-width="1" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="4.5" stroke="#8c8c8c" stroke-width="1"/></svg>
+            账号设置
+          </div>
+          <div class="dd-item dd-logout" id="btn-logout">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M5 2H3a1 1 0 00-1 1v7a1 1 0 001 1h2M9 4l3 2.5-3 2.5M12 6.5H5.5" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            退出登录
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="project-main">
+    <div class="welcome">
+      <h1>下午好，张研究员</h1>
+      <p class="welcome-sub">继续你的研究进度 &middot; 2026年7月1日 星期三</p>
+    </div>
+    <div class="action-bar">
+      <span class="section-label">我的项目</span>
+      <div class="action-bar-right">
+        <input type="text" class="search-input" id="project-search" placeholder="搜索项目...">
+        <button class="btn-outline-accent" id="new-project-btn">+ 新建项目</button>
+      </div>
+    </div>
+    <div class="project-list" id="project-list">
+      <div class="project-list-header">
+        <span class="col-name">项目名称</span>
+        <span class="col-refs">文献数</span>
+        <span class="col-created">创建日期</span>
+        <span class="col-modified">最近修改</span>
+        <span class="col-arrow"></span>
+      </div>
+      <div class="project-list-body" id="project-grid"></div>
+    </div>
+    <div class="empty-state" id="empty-state">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="12" y="6" width="24" height="32" rx="3" stroke="#d4c5a9" stroke-width="1.5"/><path d="M18 16h12M18 21h12M18 26h8" stroke="#d4c5a9" stroke-width="1.2" stroke-linecap="round"/><circle cx="32" cy="32" r="8" fill="#faf7f2" stroke="#b8976e" stroke-width="1.2"/><path d="M31 32h2M32 31v2" stroke="#b8976e" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <h3>创建你的第一个研究项目</h3>
+      <p>开始整理文献，让AI辅助你的学术写作</p>
+      <button class="btn-accent" id="empty-create-btn">新建项目</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Project Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>新建论文项目</h2>
+      <button class="modal-close" id="modal-close">
+        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="#8c8c8c" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>项目名称</label>
+        <input type="text" id="modal-title" placeholder="例如：基于深度学习的图像分割研究">
+      </div>
+      <div class="form-group">
+        <label>研究主题</label>
+        <textarea id="modal-topic" placeholder="简要描述你的研究方向和研究问题..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>默认引用格式</label>
+        <select id="modal-citation">
+          <option>GB/T 7714</option>
+          <option>APA 7th</option>
+          <option>MLA 9th</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-text" id="modal-cancel">取消</button>
+      <button class="btn-accent" id="modal-create">创建项目</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 3: WORKBENCH
+     ============================================================ -->
+<div class="page workbench-page" id="page-workbench">
+  <div class="wb-toolbar">
+    <div class="wb-tb-left">
+      <button class="wb-back-btn" id="wb-back-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 3L5 7l4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        项目列表
+      </button>
+      <span class="wb-project-name" id="wb-project-name">深度学习论文研究</span>
+    </div>
+    <div class="wb-tb-right">
+      <button class="wb-btn-export">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v9M4 7l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11v1.5h10V11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        导出文档
+      </button>
+    </div>
+  </div>
+  <div class="three-col" id="three-col">
+    <!-- Left: References -->
+    <div class="col-left" id="col-left">
+      <div class="panel-header">
+        <span>文献库</span>
+        <button class="btn-sm-accent">+ 上传</button>
+      </div>
+      <div class="search-sm">
+        <input type="text" placeholder="搜索文献..." id="ref-search">
+      </div>
+      <div class="ref-list" id="ref-list"></div>
+    </div>
+
+    <div class="resizer" id="resizer1"></div>
+
+    <!-- Mid: AI Chat -->
+    <div class="col-mid" id="col-mid">
+      <div class="panel-header">
+        <span>AI 助手</span>
+        <select style="padding:4px 24px 4px 8px;border:1px solid #e0dcd5;border-radius:6px;font-size:11px;color:var(--c-text-secondary);background:var(--c-white);appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%278%27 height=%278%27 viewBox=%270 0 8 8%27%3E%3Cpath fill=%27%238c8c8c%27 d=%27M4 5L1 2h6z%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 8px center;">
+          <option>全部文献</option>
+          <option>深度学习</option>
+          <option>NLP</option>
+        </select>
+      </div>
+      <div class="chat-area" id="chat-area"></div>
+      <div class="chat-input-area">
+        <textarea id="chat-input" placeholder="基于文献提问，例如：这些论文使用了哪些研究方法？" rows="1"></textarea>
+        <div class="chat-input-row">
+          <div class="scope-select" style="flex:1;">
+            <select style="width:100%;"><option>全部文献</option></select>
+          </div>
+          <button class="chat-send-btn" id="chat-send" title="发送">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14.5 1.5L1 7.5l5 1.5 2 5 6.5-12.5z" fill="#fff"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="resizer" id="resizer2"></div>
+
+    <!-- Right: Editor -->
+    <div class="col-right" id="col-right">
+      <div class="panel-header">
+        <span>编辑器</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-sm-accent" id="btn-ai-rewrite">AI 改写</button>
+          <button class="btn-sm-accent" id="btn-ai-expand">AI 扩写</button>
+        </div>
+      </div>
+      <div class="editor-wrapper" id="editor-wrapper">
+        <div class="outline-panel" id="outline-panel">
+          <h4>文档大纲</h4>
+          <div id="outline-tree"></div>
+        </div>
+        <div class="editor-main">
+          <div class="editor-toolbar">
+            <button id="tb-bold" title="粗体"><b>B</b></button>
+            <button id="tb-italic" title="斜体"><i>I</i></button>
+            <button id="tb-h1" title="标题 1">H1</button>
+            <button id="tb-h2" title="标题 2">H2</button>
+            <button id="tb-h3" title="标题 3">H3</button>
+            <span class="tb-divider"></span>
+            <button class="tb-ai-btn" id="tb-ai-rewrite">AI 改写</button>
+            <button class="tb-ai-btn" id="tb-ai-expand">AI 扩写</button>
+          </div>
+          <div class="editor-body" id="editor-body" contenteditable="true"></div>
+          <div class="word-count" id="word-count">0 字</div>
+        </div>
+        <div class="float-toolbar" id="float-toolbar">
+          <button data-action="rewrite">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2-6 6H2.5v-2l6-6z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            改写
+          </button>
+          <button data-action="expand">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            扩写
+          </button>
+          <button data-action="condense">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            精简
+          </button>
+          <button data-action="academic">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="8" width="8" height="1.5" rx="0.5" fill="currentColor"/><rect x="1.5" y="6" width="9" height="1.5" rx="0.5" fill="currentColor"/><path d="M6 1.5L1.5 4.5h9L6 1.5z" fill="currentColor"/></svg>
+            学术化
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const DOT_COLORS = ['#b8976e', '#7d9b7a', '#9b8ec4', '#c4956a', '#6b9ec4', '#c47a6a'];
+
+const mockProjects = [
+  { id: 1, title: '基于深度学习的图像分割研究', desc: '医学图像语义分割方法综述与对比实验，涵盖U-Net、DeepLab等主流架构', refs: 23, created: '2026-02-10', modified: '2026-06-28', color: '#b8976e' },
+  { id: 2, title: 'Transformer 架构在 NLP 中的应用综述', desc: '从Attention机制到GPT-4，系统梳理预训练语言模型的技术演进', refs: 18, created: '2026-03-05', modified: '2026-06-25', color: '#7d9b7a' },
+  { id: 3, title: '知识图谱增强的推荐系统', desc: '基于知识图谱嵌入的电商推荐策略优化与冷启动问题研究', refs: 15, created: '2026-04-18', modified: '2026-06-20', color: '#9b8ec4' },
+  { id: 4, title: '联邦学习中的隐私保护机制', desc: '基于差分隐私的联邦学习隐私保护方案设计与攻击防御策略', refs: 9, created: '2026-05-22', modified: '2026-06-15', color: '#c4956a' },
+];
+
+const mockReferences = [
+  { id: 1, status: 'done', title: 'Attention Is All You Need', authors: 'Vaswani et al.', year: '2017', abstract: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder.' },
+  { id: 2, status: 'done', title: 'BERT: Pre-training of Deep Bidirectional Transformers', authors: 'Devlin et al.', year: '2019', abstract: 'We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers.' },
+  { id: 3, status: 'parsing', title: 'GPT-3: Language Models are Few-Shot Learners', authors: 'Brown et al.', year: '2020', abstract: 'Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text.' },
+  { id: 4, status: 'done', title: 'Deep Residual Learning for Image Recognition', authors: 'He et al.', year: '2016', abstract: 'Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training.' },
+  { id: 5, status: 'error', title: 'Generative Adversarial Nets', authors: 'Goodfellow et al.', year: '2014', abstract: 'We propose a new framework for estimating generative models via an adversarial process.' },
+  { id: 6, status: 'done', title: 'EfficientNet: Rethinking Model Scaling', authors: 'Tan & Le', year: '2019', abstract: 'Convolutional Neural Networks are commonly developed at a fixed resource budget.' },
+  { id: 7, status: 'done', title: 'The Illustrated Transformer', authors: 'Alammar', year: '2018', abstract: 'In this post, we will look at The Transformer – a model that uses attention to boost the speed.' },
+  { id: 8, status: 'parsing', title: 'LoRA: Low-Rank Adaptation of Large Language Models', authors: 'Hu et al.', year: '2021', abstract: 'An important paradigm of natural language processing consists of large-scale pre-training on general domain data.' },
+];
+
+const mockChats = [
+  { role: 'user', content: '这些文献的共同研究主题是什么？' },
+  { role: 'ai', content: '根据您文献库中的8篇论文，可以归纳出以下共同研究主题：\n\n1. <b>深度学习架构演进</b>：从CNN、ResNet到Transformer、BERT、GPT-3，涵盖了深度学习模型的主要发展脉络 [1][4][2]\n2. <b>模型优化与效率</b>：EfficientNet的模型缩放策略和LoRA的低秩适应方法，都关注如何在有限资源下提升模型性能 [6][8]\n3. <b>注意力机制</b>：Transformer及其衍生模型都以注意力机制为核心创新点 [1][2][3]\n\n这些文献共同勾勒了深度学习从基础架构到应用优化的完整图景。', citations: [1,4,2,6,8,3] },
+  { role: 'user', content: '请详细介绍一下Transformer的注意力机制' },
+  { role: 'ai', content: 'Transformer的核心创新在于<b>自注意力机制（Self-Attention）</b>。\n\n根据Vaswani等人的论文，注意力机制通过三个矩阵Q（Query）、K（Key）、V（Value）来计算输入序列中每个位置与其他位置的关联权重 [1]。\n\n具体计算过程为：Attention(Q,K,V) = softmax(QK^T/√d_k)V。其中除以√d_k是为了防止点积过大导致softmax梯度消失 [1][7]。\n\n该机制的优势在于：\n- <b>并行计算</b>：不同于RNN的序列依赖，所有位置可以同时计算\n- <b>长距离依赖</b>：能够直接建模任意两个位置之间的关联\n- <b>可解释性</b>：注意力权重可视化后可以直观展示模型的关注焦点 [7]', citations: [1,7] },
+  { role: 'user', content: 'BERT和GPT-3的主要区别是什么？' },
+  { role: 'ai', content: 'BERT和GPT-3代表了两种不同的预训练范式：\n\n<b>BERT</b>采用<b>自编码（Autoencoding）</b>方式，通过掩码语言模型（MLM）进行双向上下文建模 [2]。训练时随机遮蔽15%的token并要求模型预测，使得每个token都能利用左右两侧的上下文信息。\n\n<b>GPT-3</b>采用<b>自回归（Autoregressive）</b>方式，从左到右逐个预测下一个token [3]。这种单向建模方式使其天然适合文本生成任务。\n\n关键差异总结：\n| 维度 | BERT | GPT-3 |\n|------|------|-------|\n| 预训练目标 | MLM（双向） | LM（单向） |\n| 参数量 | 340M | 175B |\n| 优势场景 | NLU（分类、QA） | NLG（生成、对话） |\n| 微调需求 | 需要微调 | Few-shot即可 [3]', citations: [2,3] },
+];
+
+const defaultEditorContent = `<h1>引言</h1><p>近年来，深度学习技术的快速发展深刻改变了自然语言处理（NLP）领域的研究范式。以Transformer架构为基础的预训练语言模型，如BERT和GPT系列，在多项NLP基准测试中取得了突破性进展<span class="cite-ref">[1]</span><span class="cite-ref">[2]</span>。这些模型通过在海量无标注文本上进行预训练，学习到了丰富的语言表征，再通过微调适配下游任务，显著降低了对标注数据的依赖。</p><h2>研究背景</h2><p>在预训练语言模型出现之前，NLP领域主要依赖词向量技术（如Word2Vec、GloVe）和基于RNN/LSTM的序列模型。这些方法存在两个主要局限：一是词向量无法处理一词多义问题；二是RNN的序列计算方式限制了并行化能力，难以利用大规模计算资源。</p><p>2017年，Vaswani等人提出的Transformer架构通过自注意力机制完全摒弃了循环结构，实现了序列的并行化处理，为后续的大规模预训练奠定了架构基础。2018年至2020年间，以BERT和GPT-3为代表的预训练模型相继问世，标志着NLP进入了「预训练+微调」的新范式。</p><h2>研究意义</h2><p>本研究旨在系统梳理预训练语言模型的技术演进路径，分析不同架构设计的优劣，探讨其在学术写作辅助场景中的应用潜力。通过深入理解这些模型的工作原理，可以为构建更智能、更可靠的AI辅助写作工具提供理论支撑和技术指导。</p>`;
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentProject = null;
+let activeRefId = null;
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function $(id) { return document.getElementById(id); }
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function switchPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $(pageId).classList.add('active');
+  if (pageId === 'page-workbench') initWorkbench();
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+const loginAccount = $('login-account');
+const loginPassword = $('login-password');
+const loginSubmit = $('login-submit');
+const privacyCb = $('privacy-cb');
+let privacyChecked = false;
+
+function updateLoginBtn() {
+  loginSubmit.disabled = !(loginAccount.value.trim() && loginPassword.value.trim() && privacyChecked);
+}
+loginAccount.addEventListener('input', updateLoginBtn);
+loginPassword.addEventListener('input', updateLoginBtn);
+privacyCb.addEventListener('click', () => {
+  privacyChecked = !privacyChecked;
+  privacyCb.classList.toggle('checked', privacyChecked);
+  updateLoginBtn();
+});
+
+const eyeOpen = $('eye-open');
+const eyeClosed = $('eye-closed');
+$('eye-btn').addEventListener('click', () => {
+  const isPass = loginPassword.type === 'password';
+  loginPassword.type = isPass ? 'text' : 'password';
+  eyeOpen.style.display = isPass ? 'none' : 'block';
+  eyeClosed.style.display = isPass ? 'block' : 'none';
+});
+
+loginSubmit.addEventListener('click', () => {
+  if (!loginSubmit.disabled) switchPage('page-projects');
+});
+
+$('signup-link').addEventListener('click', () => {
+  showToast('注册功能开发中，当前版本支持游客登录，直接点击登录即可');
+});
+
+/* User Dropdown */
+const navUserWrap = $('nav-user-wrap');
+$('nav-user-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  navUserWrap.classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!navUserWrap.contains(e.target)) navUserWrap.classList.remove('open');
+});
+$('btn-logout').addEventListener('click', () => {
+  navUserWrap.classList.remove('open');
+  switchPage('page-login');
+  setTimeout(() => showToast('已退出登录'), 300);
+});
+
+/* ============================================================
+   PROJECT LIST
+   ============================================================ */
+function formatRelativeDate(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today - targetDay) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays <= 7) return diffDays + ' 天前';
+  return dateStr;
+}
+
+function renderProjects(filter = '') {
+  const grid = $('project-grid');
+  const empty = $('empty-state');
+  const q = filter.toLowerCase();
+  const filtered = mockProjects.filter(p => p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
+
+  if (filtered.length === 0 && !filter) {
+    grid.innerHTML = '';
+    empty.classList.add('show');
+  } else {
+    empty.classList.remove('show');
+    grid.innerHTML = filtered.map((p, i) => `
+      <div class="project-row" data-id="${p.id}" style="animation: cardIn 0.3s ${0.05*i}s var(--ease) both;">
+        <div class="col-name">
+          <span class="row-dot" style="background:${p.color || '#3d4f6b'}"></span>
+          <div class="row-title-wrap">
+            <div class="row-title">${p.title}</div>
+            <div class="row-desc">${p.desc}</div>
+          </div>
+        </div>
+        <span class="col-refs">${p.refs} 篇文献</span>
+        <span class="col-created">${p.created}</span>
+        <span class="col-modified">${formatRelativeDate(p.modified)}</span>
+        <span class="col-arrow">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+    `).join('');
+  }
+
+  grid.querySelectorAll('.project-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const pid = parseInt(row.dataset.id);
+      currentProject = mockProjects.find(p => p.id === pid);
+      $('wb-project-name').textContent = currentProject.title;
+      switchPage('page-workbench');
+    });
+  });
+}
+
+$('project-search').addEventListener('input', e => renderProjects(e.target.value));
+
+function openModal() { $('modal-overlay').classList.add('show'); }
+function closeModal() { $('modal-overlay').classList.remove('show'); }
+$('new-project-btn').addEventListener('click', openModal);
+$('empty-create-btn').addEventListener('click', openModal);
+$('modal-cancel').addEventListener('click', closeModal);
+$('modal-close').addEventListener('click', closeModal);
+$('modal-overlay').addEventListener('click', e => { if (e.target === $('modal-overlay')) closeModal(); });
+
+$('modal-create').addEventListener('click', () => {
+  const title = $('modal-title').value.trim();
+  if (!title) { showToast('请输入项目名称'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  mockProjects.unshift({
+    id: Date.now(), title,
+    desc: $('modal-topic').value.trim() || '暂无描述',
+    refs: 0, created: today, modified: today,
+    color: DOT_COLORS[Math.floor(Math.random() * DOT_COLORS.length)]
+  });
+  closeModal();
+  $('modal-title').value = '';
+  $('modal-topic').value = '';
+  renderProjects($('project-search').value);
+  showToast('项目创建成功');
+});
+
+/* ============================================================
+   WORKBENCH
+   ============================================================ */
+function initWorkbench() {
+  renderReferences();
+  renderChats();
+  initEditor();
+  updateOutline();
+}
+
+$('wb-back-btn').addEventListener('click', () => {
+  switchPage('page-projects');
+  renderProjects($('project-search').value);
+});
+
+// References
+function renderReferences(filter = '') {
+  const list = $('ref-list');
+  const q = filter.toLowerCase();
+  const filtered = mockReferences.filter(r => r.title.toLowerCase().includes(q) || r.authors.toLowerCase().includes(q));
+  const labels = { done: '已解析', parsing: '解析中', error: '失败' };
+  list.innerHTML = filtered.map(r => `
+    <div class="ref-item ${r.id === activeRefId ? 'active' : ''}" data-id="${r.id}">
+      <div class="ref-status-row">
+        <span class="ref-dot ${r.status}"></span>
+        <span class="ref-status-label">${labels[r.status]}</span>
+      </div>
+      <div class="ref-title">${r.title}</div>
+      <div class="ref-meta">${r.authors}, ${r.year}</div>
+      <div class="ref-tooltip">
+        <h4>${r.title}</h4>
+        <div class="abstract">${r.abstract.substring(0, 100)}...</div>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.ref-item').forEach(item => {
+    item.addEventListener('click', () => {
+      activeRefId = parseInt(item.dataset.id);
+      renderReferences($('ref-search').value);
+      const ref = mockReferences.find(r => r.id === activeRefId);
+      $('chat-input').value = '请总结《' + ref.title + '》这篇文献的核心观点';
+    });
+  });
+}
+$('ref-search').addEventListener('input', e => renderReferences(e.target.value));
+
+// Chat
+function renderChats() {
+  const area = $('chat-area');
+  const refCount = mockReferences.length;
+  area.innerHTML = `
+    <div class="chat-msg ai">
+      <div class="ai-avatar">AI</div>
+      <div style="flex:1;">
+        <div class="msg-bubble">你好！我是你的学术写作助手。我已读取了你项目中的 ${refCount} 篇文献，可以基于这些文献回答你的问题。试着问我：<b>这些文献的共同研究主题是什么？</b></div>
+      </div>
+    </div>
+    ${mockChats.map(chat => {
+      if (chat.role === 'user') {
+        return '<div class="chat-msg user"><div class="msg-bubble">' + chat.content.replace(/\n/g, '<br>') + '</div></div>';
+      } else {
+        const citationTags = (chat.citations || []).map(c => '<span class="msg-cite" data-ref-id="' + c + '">[' + c + ']</span>').join('');
+        return '<div class="chat-msg ai"><div class="ai-avatar">AI</div><div style="flex:1;"><div class="msg-bubble">' + chat.content.replace(/\n/g, '<br>') + '</div><div class="msg-citations">' + citationTags + '</div><div class="msg-actions"><button class="insert-editor-btn">插入到编辑器</button></div></div></div>';
+      }
+    }).join('')}
+  `;
+  area.scrollTop = area.scrollHeight;
+
+  area.querySelectorAll('.msg-cite').forEach(cite => {
+    cite.addEventListener('click', () => {
+      const refId = parseInt(cite.dataset.refId);
+      activeRefId = refId;
+      renderReferences($('ref-search').value);
+      const refItem = $('ref-list').querySelector('[data-id="' + refId + '"]');
+      if (refItem) refItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  area.querySelectorAll('.insert-editor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bubble = btn.closest('.chat-msg.ai').querySelector('.msg-bubble');
+      const content = bubble.innerHTML;
+      const editor = $('editor-body');
+      editor.focus();
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const div = document.createElement('div');
+        div.innerHTML = content;
+        range.insertNode(div);
+      } else {
+        editor.innerHTML += '<div>' + content + '</div>';
+      }
+      updateOutline();
+      updateWordCount();
+      showToast('已插入到编辑器');
+    });
+  });
+}
+
+$('chat-send').addEventListener('click', sendChat);
+$('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+$('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+function sendChat() {
+  const input = $('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  mockChats.push({ role: 'user', content: text });
+  const refs = [...new Set(Array.from({length: Math.floor(Math.random()*3)+2}, () => Math.floor(Math.random()*8)+1))].sort((a,b)=>a-b);
+  mockChats.push({ role: 'ai', content: '根据您文献库中的相关资料，我来回答您的问题：\n\n基于现有文献的分析，该主题涉及多个维度的研究。相关文献中，不同学者从各自角度进行了深入探讨。关键发现包括方法论创新、实验结果对比以及理论框架的拓展等方面。\n\n具体而言，相关研究表明该领域正在经历从传统方法向数据驱动范式的转变，这一趋势在多篇核心文献中得到了印证。', citations: refs });
+  input.value = '';
+  input.style.height = 'auto';
+  renderChats();
+}
+
+/* ============================================================
+   EDITOR
+   ============================================================ */
+function initEditor() {
+  $('editor-body').innerHTML = defaultEditorContent;
+  updateWordCount();
+}
+
+function updateWordCount() {
+  const text = $('editor-body').innerText.trim();
+  const count = text.length > 0 ? text.replace(/\s/g, '').length : 0;
+  $('word-count').textContent = count.toLocaleString() + ' 字';
+}
+
+$('editor-body').addEventListener('input', () => { updateOutline(); updateWordCount(); });
+
+$('editor-body').addEventListener('mouseup', function() {
+  setTimeout(() => {
+    const sel = window.getSelection();
+    if (!sel.toString().trim()) { hideFloatToolbar(); return; }
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const wrapperRect = $('editor-wrapper').getBoundingClientRect();
+    const tb = $('float-toolbar');
+    tb.style.top = (rect.top - wrapperRect.top - 46) + 'px';
+    tb.style.left = Math.min(rect.left - wrapperRect.left + rect.width/2 - 120, wrapperRect.width - 260) + 'px';
+    tb.classList.add('show');
+  }, 10);
+});
+
+document.addEventListener('mousedown', function(e) {
+  if (!$('float-toolbar').contains(e.target) && e.target !== $('editor-body') && !$('editor-body').contains(e.target)) {
+    hideFloatToolbar();
+  }
+});
+function hideFloatToolbar() { $('float-toolbar').classList.remove('show'); }
+
+$('float-toolbar').querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const action = this.dataset.action;
+    const sel = window.getSelection();
+    const text = sel.toString().trim();
+    if (!text) return;
+    const labels = { rewrite: '改写', expand: '扩写', condense: '精简', academic: '学术化' };
+    mockChats.push({ role: 'ai', content: '以下是选中文本的' + labels[action] + '结果：\n\n<blockquote style="background:#faf7f2;padding:10px 14px;border-left:2px solid #b8976e;margin:0;font-size:13px;border-radius:0 4px 4px 0;">' + text + '（此处为' + labels[action] + '后的版本，基于文献库优化了表达和学术规范性）</blockquote>', citations: [1, 2] });
+    renderChats();
+    hideFloatToolbar();
+    showToast('AI ' + labels[action] + '结果已生成');
+  });
+});
+
+$('tb-bold').addEventListener('click', () => document.execCommand('bold'));
+$('tb-italic').addEventListener('click', () => document.execCommand('italic'));
+$('tb-h1').addEventListener('click', () => document.execCommand('formatBlock', false, 'h1'));
+$('tb-h2').addEventListener('click', () => document.execCommand('formatBlock', false, 'h2'));
+$('tb-h3').addEventListener('click', () => document.execCommand('formatBlock', false, 'h3'));
+
+['tb-ai-rewrite', 'tb-ai-expand'].forEach(id => {
+  $(id).addEventListener('click', function() {
+    const action = id === 'tb-ai-rewrite' ? '改写' : '扩写';
+    const sel = window.getSelection();
+    const text = sel.toString().trim() || $('editor-body').innerText.substring(0, 80);
+    mockChats.push({ role: 'ai', content: '以下是对选中内容的' + action + '结果：\n\n' + text + '（此处为AI ' + action + '后的版本，优化了学术表达）', citations: [1] });
+    renderChats();
+    showToast('AI ' + action + '已生成，请查看对话区');
+  });
+});
+
+$('btn-ai-rewrite').addEventListener('click', () => {
+  const text = window.getSelection().toString().trim() || $('editor-body').innerText.substring(0, 80);
+  mockChats.push({ role: 'ai', content: '以下是对选中内容的改写结果：\n\n' + text + '（此处为AI改写后的版本，优化了表达流畅性和学术规范性）', citations: [1, 2] });
+  renderChats();
+  showToast('AI 改写已生成，请查看对话区');
+});
+$('btn-ai-expand').addEventListener('click', () => {
+  const text = window.getSelection().toString().trim() || $('editor-body').innerText.substring(0, 80);
+  mockChats.push({ role: 'ai', content: '以下是对选中内容的扩写结果：\n\n' + text + '\n\n（此处为AI扩写后的版本，补充了更多细节和论证内容）', citations: [1, 2] });
+  renderChats();
+  showToast('AI 扩写已生成，请查看对话区');
+});
+
+// Outline
+function updateOutline() {
+  const headings = $('editor-body').querySelectorAll('h1, h2, h3');
+  const tree = $('outline-tree');
+  tree.innerHTML = '';
+  headings.forEach(h => {
+    const level = h.tagName.toLowerCase();
+    const div = document.createElement('div');
+    div.className = 'outline-item ' + level + '-level';
+    div.textContent = h.textContent.trim();
+    div.addEventListener('click', () => h.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    tree.appendChild(div);
+  });
+}
+
+$('editor-body').addEventListener('click', function(e) {
+  if (e.target.classList.contains('cite-ref')) {
+    const refId = parseInt(e.target.textContent.replace(/[\[\]]/g, ''));
+    if (refId) {
+      activeRefId = refId;
+      renderReferences($('ref-search').value);
+      const refItem = $('ref-list').querySelector('[data-id="' + refId + '"]');
+      if (refItem) refItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+});
+
+/* ============================================================
+   RESIZER
+   ============================================================ */
+function initResizer(resizerId, leftId, rightId) {
+  const resizer = $(resizerId);
+  const left = $(leftId);
+  const right = $(rightId);
+  let startX, leftStartW, rightStartW;
+
+  resizer.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    startX = e.clientX;
+    leftStartW = left.offsetWidth;
+    rightStartW = right.offsetWidth;
+    resizer.classList.add('active');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    function onMouseMove(e) {
+      const dx = e.clientX - startX;
+      let newLeftW = leftStartW + dx;
+      let newRightW = rightStartW - dx;
+      const leftMin = leftId === 'col-left' ? 150 : 250;
+      const rightMin = rightId === 'col-mid' ? 250 : 300;
+      if (newLeftW < leftMin) newLeftW = leftMin;
+      if (newRightW < rightMin) newRightW = rightMin;
+      const adj = leftStartW + rightStartW - newRightW;
+      if (adj >= leftMin) {
+        left.style.width = adj + 'px';
+        right.style.width = newRightW + 'px';
+      }
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      resizer.classList.remove('active');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+initResizer('resizer1', 'col-left', 'col-mid');
+initResizer('resizer2', 'col-mid', 'col-right');
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+const styleSheet = document.createElement('style');
+styleSheet.textContent = '@keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}';
+document.head.appendChild(styleSheet);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderProjects();
+$('empty-state').classList.remove('show');
+</script>
+</body>
+</html>
